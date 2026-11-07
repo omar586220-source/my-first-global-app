@@ -3,52 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>موقعي العالمي الأول</title>
+    <title>مترجم بايثون الحقيقي داخل المتصفح</title>
+    
+    <!-- تحميل محرك البايثون المترجم لـ WebAssembly -->
+    <script src="https://jsdelivr.net"></script>
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            background-color: #1e1e1e;
+            color: #ffffff;
             margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
         }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 400px;
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
-        h1 {
-            color: #2f80ed;
-            margin-bottom: 10px;
+        h1 { margin: 0; font-size: 24px; color: #4af626; }
+        .status { font-size: 14px; color: #aaa; }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex: 1;
         }
-        p {
-            font-size: 18px;
-            color: #666;
+        .editor-container, .output-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
-        .badge {
-            background-color: #27ae60;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 14px;
-            display: inline-block;
-            margin-top: 15px;
+        textarea {
+            width: 100%;
+            flex: 1;
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            box-sizing: border-box;
         }
+        textarea:focus { border-color: #4af626; }
+        .terminal {
+            width: 100%;
+            flex: 1;
+            background-color: #000000;
+            color: #4af626;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 15px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4af626;
+            color: #000;
+            border: none;
+            padding: 10px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:disabled { background-color: #555; cursor: not-allowed; color: #888; }
+        button:hover:not(:disabled) { background-color: #3cd01e; }
+        h3 { margin-top: 0; margin-bottom: 8px; color: #ddd; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>مرحباً بك في موقعي العالمي! 🚀</h1>
-        <p>هذه الصفحة مكتوبة بلغة HTML ومرفوعة على جيت هب لتكون متاحة لأي شخص في العالم.</p>
-        <div class="badge">يعمل بنجاح مية بالمية وعالمي واونلاين ومجاني</div>
+    <header>
+        <h1>🚀 مترجم البايثون الحقيقي المتكامل</h1>
+        <div id="status" class="status">جاري تشغيل محرك المترجم (WebAssembly)...</div>
+        <button id="run-btn" disabled onclick="runCode()">تشغيل الكود 🏃‍♂️</button>
+    </header>
+
+    <div class="container">
+        <!-- منطقة كتابة الكود -->
+        <div class="editor-container">
+            <h3>اكتب كود البايثون هنا:</h3>
+            <textarea id="code-editor" spellcheck="false"># اكتب كود بايثون حقيقي هنا وسيقوم المتصفح بترجمته فوراً
+def greet(name):
+    return f"أهلاً بك {name} في كمبايلر المتصفح الحقيقي!"
+
+# حساب حلقة تكرارية
+for i in range(1, 4):
+    print(f"الخطوة رقم: {i}")
+
+print(greet("يا مبرمج"))
+</textarea>
+        </div>
+
+        <!-- منطقة المخرجات -->
+        <div class="output-container">
+            <h3>شاشة المخرجات (Terminal):</h3>
+            <div id="output" class="terminal">المترجم يستعد للعمل...</div>
+        </div>
     </div>
 
+    <script>
+        let pyodideInstance = null;
+
+        // تهيئة محرك البايثون داخل المتصفح عند فتح الصفحة
+        async function initCompiler() {
+            try {
+                // تحميل بايثون بالكامل داخل الـ WebAssembly الخاص بالمتصفح
+                pyodideInstance = await loadPyodide();
+                
+                document.getElementById('status').innerText = "المترجم جاهز بنسبة 100% ويعمل محلياً!🟢";
+                document.getElementById('status').style.color = "#4af626";
+                document.getElementById('output').innerText = "اكتب كودك واضغط على 'تشغيل الكود' لرؤية النتيجة فوراً.";
+                document.getElementById('run-btn').disabled = false;
+            } catch (error) {
+                document.getElementById('output').innerText = "فشل تحميل المترجم: " + error;
+            }
+        }
+
+        // تشغيل الكود المكتوب وتحويل المخرجات للشاشة
+        async function runCode() {
+            if (!pyodideInstance) return;
+
+            const code = document.getElementById('code-editor').value;
+            const outputElement = document.getElementById('output');
+            outputElement.innerText = "جاري التنفيذ...\n";
+
+            // مصفوفة لتجميع نصوص الـ print الصادرة من البايثون
+            let outputBuffer = [];
+            pyodideInstance.setStdout({
+                batched: (text) => {
+                    outputBuffer.push(text);
+                }
+            });
+            pyodideInstance.setStderr({
+                batched: (text) => {
+                    outputBuffer.push("خطأ برمي: " + text);
+                }
+            });
+
+            try {
+                // تنفيذ الكود حقيقياً بداخل متصفح المستخدم
+                await pyodideInstance.runPythonAsync(code);
+                
+                // عرض النتائج في الشاشة السوداء
+                if (outputBuffer.length === 0) {
+                    outputElement.innerText = "تم تشغيل الكود بنجاح (لا توجد مخرجات للطباعة).";
+                } else {
+                    outputElement.innerText = outputBuffer.join("\n");
+                }
+            } catch (err) {
+                // عرض الأخطاء البرمجية للمستخدم إذا أخطأ في كتابة بايثون
+                outputElement.innerText = "❌ حدث خطأ في كود البايثون الخاص بك:\n\n" + err.message;
+            }
+        }
+
+        // بدء تشغيل المحرك تلقائياً
+        initCompiler();
+    </script>
 </body>
 </html>
